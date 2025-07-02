@@ -113,6 +113,14 @@ namespace diskann {
       }
     }
 
+    // Dynamic beam width - using static policy
+#ifdef DYN_BEAM_WIDTH
+    uint32_t cur_beam_width = 4;  // start with small beam width
+#else
+    uint32_t cur_beam_width = beam_width;  // use fixed beam width
+#endif
+    uint32_t max_marker = 0;  // track search progress
+
     unsigned cur_list_size = 0;
     auto compute_and_add_to_retset = [&](const unsigned *node_ids, const _u64 n_ids) {
       compute_dists(node_ids, n_ids, dist_scratch);
@@ -154,11 +162,20 @@ namespace diskann {
       frontier_nhoods.clear();
       frontier_read_reqs.clear();
       sector_scratch_idx = 0;
+
+#ifdef DYN_BEAM_WIDTH
+      // Update beam width using static policy based on search progress
+      constexpr uint32_t kBeamWidths[] = {4, 4, 8, 8, 16, 16, 24, 24, 32};
+      cur_beam_width = kBeamWidths[std::min(max_marker / 5, 8u)];
+      // Ensure we don't exceed the maximum beam width
+      cur_beam_width = std::min(cur_beam_width, beam_width);
+#endif
+
       // find new beam
       // WAS: _u64 marker = k - 1;
       _u32 marker = k;
       _u32 num_seen = 0;
-      while (marker < cur_list_size && frontier.size() < beam_width && num_seen < beam_width) {
+      while (marker < cur_list_size && frontier.size() < cur_beam_width && num_seen < cur_beam_width) {
         if (retset[marker].flag) {
           num_seen++;
           frontier.push_back(retset[marker].id);
@@ -169,6 +186,9 @@ namespace diskann {
         }
         marker++;
       }
+
+      // Update max_marker for progress tracking
+      max_marker = std::max(max_marker, marker);
 
       // read nhoods of frontier ids
       if (!frontier.empty()) {

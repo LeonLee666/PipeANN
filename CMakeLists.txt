@@ -88,6 +88,8 @@ add_definitions(
 	# policy.
 	# -DSTATIC_POLICY
 
+	-DDYN_BEAM_WIDTH
+
 	# unoptimizations.
 	# -DNAIVE_PIPE
 )
