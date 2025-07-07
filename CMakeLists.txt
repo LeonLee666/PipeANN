@@ -80,13 +80,13 @@ endif()
 
 add_definitions(
 	$ENV{ADDITIONAL_DEFINITIONS}
-	# -DUSE_AIO # use AIO instead of io uring (better compatibility, worse performance)
+	-DUSE_AIO # use AIO instead of io uring (better compatibility, worse performance)
 	# optimizations.
-	-DOVERLAP_INIT
-	# -DDYN_PIPE_WIDTH
+	#-DOVERLAP_INIT
+	-DDYN_PIPE_WIDTH
 	
 	# policy.
-	# -DSTATIC_POLICY
+	-DSTATIC_POLICY
 
 	-DDYN_BEAM_WIDTH
 
